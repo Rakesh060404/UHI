@@ -1,0 +1,19 @@
+﻿# Python env
+venv_new/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+.venv/
+build/
+dist/
+*.egg-info/
+# local settings
+.env
+# Jupyter
+.ipynb_checkpoints/
+# OS
+.DS_Store
+Thumbs.db
