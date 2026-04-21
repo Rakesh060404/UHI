@@ -31,11 +31,33 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── Load artifacts ────────────────────────────────────────────────────────────
+
+def _normalize_xgb_base_score(model):
+    if hasattr(model, "get_params") and hasattr(model, "set_params"):
+        base_score = model.get_params().get("base_score")
+        if isinstance(base_score, str):
+            normalized = base_score.strip().strip("[]")
+            try:
+                model.set_params(base_score=float(normalized))
+            except ValueError:
+                pass
+    return model
+
 @st.cache_resource
 def load_artifacts():
-    model   = joblib.load("best_model.pkl")
-    scaler  = joblib.load("scaler.pkl")
-    df      = pd.read_csv("uhi_data.csv")
+    try:
+        model = joblib.load("best_model.pkl")
+    except ValueError as exc:
+        message = str(exc)
+        if "could not convert string to float" in message and "base_score" in message:
+            st.error("Model load failed due to xgboost base_score format mismatch (e.g., '[3.512663E-2]').\n"
+                     "Please use xgboost==1.7.6 or regenerate model with a numeric base_score.")
+            raise
+        raise
+
+    model = _normalize_xgb_base_score(model)
+    scaler = joblib.load("scaler.pkl")
+    df = pd.read_csv("uhi_data.csv")
     with open("features.json") as f:
         features = json.load(f)
     return model, scaler, df, features
